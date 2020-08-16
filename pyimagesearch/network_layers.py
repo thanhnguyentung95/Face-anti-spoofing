@@ -20,15 +20,15 @@ class RSGB(Model):
     def call(self, input_tensor, training=False):
         main_stream = self.conv(input_tensor)
 
-        gradient_x = spatial_gradient_x(input_tensor)
-        gradient_y = spatial_gradient_y(input_tensor)
+        pw_spatial = self.pw_conv(main_stream)
+        gradient_x = spatial_gradient_x(pw_spatial)
+        gradient_y = spatial_gradient_y(pw_spatial)
         gradient_x = square(gradient_x)
         gradient_y = square(gradient_y)
         spatial_gradient = gradient_x + gradient_y
-        spatial_gradient = self.gradient_norm(spatial_gradient)
-        pw_spatial_gradient = self.pw_conv(spatial_gradient)
+        spatial_gradient = self.gradient_norm(spatial_gradient)        
         
-        outstream = tf.math.add(main_stream, pw_spatial_gradient)  # support broadcasting
+        outstream = tf.math.add(main_stream, spatial_gradient)  # support broadcasting
         outstream = self.layer_norm(outstream)
         outstream = tf.nn.relu(outstream)
 
@@ -43,7 +43,7 @@ def spatial_gradient_x(input, name=''):
     sobel_kernel_x = tf.constant(sobel_plane_x, dtype=tf.float32)
 
     Spatial_Gradient_x = tf.nn.depthwise_conv2d(input, filter=sobel_kernel_x, \
-                                                strides=[1,1,1,1], padding='SAME', name=name+'/spatial_gradient_x')
+                                                strides=[1,1,1,1], padding='SAME')
     return Spatial_Gradient_x
 
 def spatial_gradient_y(input, name=''):
@@ -54,5 +54,5 @@ def spatial_gradient_y(input, name=''):
     sobel_kernel_y = tf.constant(sobel_plane_y, dtype=tf.float32)
 
     Spatial_Gradient_y = tf.nn.depthwise_conv2d(input, filter=sobel_kernel_y, \
-                                                strides=[1,1,1,1], padding='SAME', name=name+'/spatial_gradient_y')
+                                                strides=[1,1,1,1], padding='SAME')
     return Spatial_Gradient_y

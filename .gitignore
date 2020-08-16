@@ -1,0 +1,7 @@
+# Model checkpoints
+liveness_model
+
+# Compiled python file
+# __pycache__
+
+# .ipynb_checkpoints
