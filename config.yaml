@@ -11,7 +11,7 @@ initial_learning_rate: 1e-4
 training_param:
   batch_size: 1
   num_epochs_phase1: 1
-  num_epochs_phase2: 1
+  num_epochs_phase2: 2
   test_size: 0.2
 
 encoder_path: le.pickle

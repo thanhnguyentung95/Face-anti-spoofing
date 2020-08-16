@@ -22,7 +22,7 @@ import argparse
 import pickle
 import cv2
 import os
-from utils import load_config
+from utils import load_config, get_run_logdir
 
 
 CONFIG = load_config()
@@ -126,10 +126,10 @@ print("[INFO] training network for {} epochs...".format(NUM_EPOCHS_PHASE1))
 
 model = LivenessNet.build_backbone(height=INPUT_HEIGHT, width=INPUT_WIDTH, depth=INPUT_DEPTH)
 model.compile(loss=EDL, optimizer=opt, metrics=EDL)
-
+tensorboard_cb = tf.keras.callbacks.TensorBoard(get_run_logdir())
 H = model.fit(x=trainX, y=trainY, batch_size=BS, 
 	validation_data=(testX, testY), steps_per_epoch=len(trainX) // BS,
-	epochs=NUM_EPOCHS_PHASE1)
+	epochs=NUM_EPOCHS_PHASE1, callbacks=[tensorboard_cb])
 
 # Phase 2
 
@@ -137,9 +137,10 @@ H = model.fit(x=trainX, y=trainY, batch_size=BS,
 	test_size=CONFIG['training_param']['test_size'], random_state=42)
 model = LivenessNet.build_classifier(model, 2)
 model.compile(loss=["categorical_crossentropy"], optimizer=opt, metrics='accuracy')
+tensorboard_cb = tf.keras.callbacks.TensorBoard(get_run_logdir())
 H = model.fit(x=trainX, y=trainY, batch_size=BS, 
 	validation_data=(testX, testY), steps_per_epoch=len(trainX) // BS,
-	epochs=NUM_EPOCHS_PHASE2)
+	epochs=NUM_EPOCHS_PHASE2, callbacks=[tensorboard_cb])
 
 # evaluate the network
 print("[INFO] evaluating network...")
@@ -159,10 +160,10 @@ f.close()
 # plot the training loss and accuracy
 plt.style.use("ggplot")
 plt.figure()
-plt.plot(np.arange(0, EPOCHS), H.history["loss"], label="train_loss")
-plt.plot(np.arange(0, EPOCHS), H.history["val_loss"], label="val_loss")
-plt.plot(np.arange(0, EPOCHS), H.history["accuracy"], label="train_acc")
-plt.plot(np.arange(0, EPOCHS), H.history["val_accuracy"], label="val_acc")
+plt.plot(np.arange(0, NUM_EPOCHS_PHASE2), H.history["loss"], label="train_loss")
+plt.plot(np.arange(0, NUM_EPOCHS_PHASE2), H.history["val_loss"], label="val_loss")
+plt.plot(np.arange(0, NUM_EPOCHS_PHASE2), H.history["accuracy"], label="train_acc")
+plt.plot(np.arange(0, NUM_EPOCHS_PHASE2), H.history["val_accuracy"], label="val_acc")
 plt.title("Training Loss and Accuracy on Dataset")
 plt.xlabel("Epoch #")
 plt.ylabel("Loss/Accuracy")
